@@ -1,26 +1,48 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
 
     Rigidbody body;
+    AudioSource aSource;
+    [SerializeField] AudioClip mainThrust;
+    [SerializeField] ParticleSystem leftThrustParticles;
+    [SerializeField] ParticleSystem rightThrustParticles;
+    [SerializeField] ParticleSystem mainThrustParticles;
 
     [SerializeField] float thrust = 1000f;
     [SerializeField] float rotationThrust = 1000f;
+    bool allowMoving = true;
+    bool isDead = false;
 
     // Start is called before the first frame update
     void Start()
     {
         body = GetComponent<Rigidbody>();
+        aSource = GetComponent<AudioSource>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        ProcessThrust();
-        ProcessRotation();
+        if (allowMoving)
+        {
+            ProcessThrust();
+            ProcessRotation();
+        }
+        else
+        {
+            if (aSource.isPlaying || isDead)
+            {
+                aSource.Stop();
+            }
+        }
+
+    }
+    public void StopMovement()
+    {
+        allowMoving = false;
+        isDead = true;
     }
 
     void ProcessThrust()
@@ -29,6 +51,19 @@ public class Movement : MonoBehaviour
         {
             // Debug.Log("boost");
             body.AddRelativeForce(Vector3.up * thrust * Time.deltaTime);
+            if (!aSource.isPlaying && !isDead)
+            {
+                aSource.PlayOneShot(mainThrust);
+            }
+            if (!mainThrustParticles.isPlaying)
+                mainThrustParticles.Play();
+        }
+        else
+        {
+            if (aSource.isPlaying)
+                aSource.Stop();
+            if (mainThrustParticles.isPlaying)
+                mainThrustParticles.Stop();
         }
         return;
     }
@@ -37,15 +72,27 @@ public class Movement : MonoBehaviour
 
         if (Input.GetKey(KeyCode.A))
         {
-            Debug.Log("left");
             ApplyRotation(rotationThrust);
+            if (!rightThrustParticles.isPlaying)
+                rightThrustParticles.Play();
+
         }
         else if (Input.GetKey(KeyCode.D))
         {
-            Debug.Log("right");
             ApplyRotation(-rotationThrust);
 
+            if (!leftThrustParticles.isPlaying)
+                leftThrustParticles.Play();
+
         }
+        else
+        {
+            if (leftThrustParticles.isPlaying)
+                leftThrustParticles.Stop();
+            if (rightThrustParticles.isPlaying)
+                rightThrustParticles.Stop();
+        }
+
         return;
     }
 
